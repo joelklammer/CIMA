@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIMA – Admin</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header>
+    <div class="header-left">
+        <img src="https://web.quarknet.org/files/logo/QuarkNet-LOGO-Vertical-WHITE.png" alt="QuarkNet" class="header-logo">
+        <div>
+            <h1>CIMA</h1>
+            <div class="header-sub">CMS Instrument for Masterclass Analysis</div>
+        </div>
+    </div>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="#" id="logout-link" style="display:none;">Logout</a>
+    </nav>
+</header>
+
+<!-- Login overlay -->
+<div class="login-overlay" id="login-overlay">
+    <div class="login-box">
+        <h2>Administrator Login</h2>
+        <div class="alert alert-error" id="login-error"></div>
+        <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" placeholder="Enter admin password" autocomplete="current-password">
+        </div>
+        <button class="btn btn-primary" id="login-btn" style="width:100%;">Login</button>
+    </div>
+</div>
+
+<div class="container" id="admin-content" style="display:none;">
+    <div class="page-title">Masterclass Administration</div>
+
+    <!-- Create New Masterclass -->
+    <div class="card">
+        <h2>Create New Masterclass</h2>
+        <div class="alert alert-error"   id="create-error"></div>
+        <div class="alert alert-success" id="create-success"></div>
+        <div class="form-row">
+            <div class="form-group" style="flex:2;">
+                <label for="mc-name">Masterclass Name</label>
+                <input type="text" id="mc-name" placeholder="e.g. Spring 2025 – CERN Visit">
+            </div>
+            <div class="form-group">
+                <label for="mc-datasets">Number of Datasets</label>
+                <input type="number" id="mc-datasets" placeholder="e.g. 5" min="1" max="100" value="5">
+            </div>
+            <div style="padding-bottom:1px;">
+                <button class="btn btn-success" id="create-btn">+ Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password -->
+    <div class="card">
+        <h2>Change Admin Password</h2>
+        <div class="alert alert-error"   id="pw-error"></div>
+        <div class="alert alert-success" id="pw-success"></div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="pw-current">Current Password</label>
+                <input type="password" id="pw-current" autocomplete="current-password">
+            </div>
+            <div class="form-group">
+                <label for="pw-new">New Password <span style="font-weight:400;color:#888;">(min 10 chars)</span></label>
+                <input type="password" id="pw-new" autocomplete="new-password">
+            </div>
+            <div class="form-group">
+                <label for="pw-confirm">Confirm New Password</label>
+                <input type="password" id="pw-confirm" autocomplete="new-password">
+            </div>
+            <div style="padding-bottom:1px;">
+                <button class="btn btn-secondary" id="pw-btn">Update Password</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Existing Masterclasses -->
+    <div class="card">
+        <h2>Existing Masterclasses</h2>
+        <div id="mc-loading" style="text-align:center;padding:20px;color:#888;">
+            <span class="spinner"></span>
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table class="admin-table" id="mc-table" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Datasets</th>
+                        <th>Created</th>
+                        <th>Summary</th>
+                        <th>Rename</th>
+                        <th>Archive</th>
+                        <th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody id="mc-tbody"></tbody>
+            </table>
+        </div>
+        <div id="mc-empty" class="empty-state" style="display:none;">No masterclasses yet.</div>
+    </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="login-overlay" id="confirm-overlay" style="display:none;">
+    <div class="login-box">
+        <h2 id="confirm-title">Delete Masterclass?</h2>
+        <p id="confirm-msg" style="margin-bottom:18px;color:#555;font-size:.9rem;"></p>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <button class="btn btn-secondary" id="confirm-cancel">Cancel</button>
+            <button class="btn btn-danger"    id="confirm-delete">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- Rename Modal -->
+<div class="login-overlay" id="rename-overlay" style="display:none;">
+    <div class="login-box">
+        <h2>Rename Masterclass</h2>
+        <div class="alert alert-error" id="rename-error"></div>
+        <div class="form-group" style="margin-bottom:18px;">
+            <label for="rename-input">New Name</label>
+            <input type="text" id="rename-input" placeholder="Enter new masterclass name">
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <button class="btn btn-secondary" id="rename-cancel">Cancel</button>
+            <button class="btn btn-primary"   id="rename-confirm">Rename</button>
+        </div>
+    </div>
+</div>
+
+<script src="js/admin.js"></script>
+</body>
+</html>

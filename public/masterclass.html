@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIMA – Masterclass</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header>
+    <div class="header-left">
+        <img src="https://web.quarknet.org/files/logo/QuarkNet-LOGO-Vertical-WHITE.png" alt="QuarkNet" class="header-logo">
+        <div>
+            <h1>CIMA</h1>
+            <div class="header-sub" id="header-sub">CMS Instrument for Masterclass Analysis</div>
+        </div>
+    </div>
+    <nav>
+        <a href="index.html">← All Masterclasses</a>
+    </nav>
+</header>
+
+<div class="container">
+    <div id="page-loading" style="text-align:center;padding:60px;color:#888;">
+        <span class="spinner"></span>&nbsp; Loading masterclass…
+    </div>
+
+    <div id="page-content" style="display:none;">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+            <div class="page-title" id="mc-title" style="margin-bottom:0;border-bottom:none;"></div>
+            <a id="summary-link" href="#" class="btn btn-outline">View Summary →</a>
+        </div>
+
+        <div class="dataset-bar">
+            <label for="dataset-select">Dataset:</label>
+            <select id="dataset-select"></select>
+            <div class="save-status hidden" id="save-status"></div>
+        </div>
+
+        <div class="event-table-wrap">
+            <table class="event-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2" style="min-width:38px;">#</th>
+                        <th colspan="7" class="group-fs">Final State</th>
+                        <th colspan="4" class="group-ps">Primary State</th>
+                        <th rowspan="2" style="min-width:82px;">Mass<br>[GeV]</th>
+                        <th rowspan="2" style="min-width:32px;background:#1a3a6b;"></th>
+                    </tr>
+                    <tr>
+                        <th>e-ν</th>
+                        <th>μ-ν</th>
+                        <th>e-e</th>
+                        <th>μ-μ</th>
+                        <th>4e</th>
+                        <th>4μ</th>
+                        <th>2e-2μ</th>
+                        <th>W+</th>
+                        <th>W-</th>
+                        <th>NP<br>(Z,H)</th>
+                        <th>Zoo</th>
+                    </tr>
+                </thead>
+                <tbody id="event-tbody"></tbody>
+                <tfoot id="event-tfoot"></tfoot>
+            </table>
+        </div>
+    </div>
+
+    <div id="page-error" style="display:none;text-align:center;padding:60px;color:#c0392b;">
+        <p id="error-msg">Masterclass not found.</p>
+        <a href="index.html" class="btn btn-primary" style="margin-top:16px;">Return Home</a>
+    </div>
+</div>
+
+<script src="js/masterclass.js"></script>
+</body>
+</html>

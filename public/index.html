@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIMA – CMS Instrument for Masterclass Analysis</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header>
+    <div class="header-left">
+        <img src="https://web.quarknet.org/files/logo/QuarkNet-LOGO-Vertical-WHITE.png" alt="QuarkNet" class="header-logo">
+        <div>
+            <h1>CIMA</h1>
+            <div class="header-sub">CMS Instrument for Masterclass Analysis</div>
+        </div>
+    </div>
+    <nav>
+        <a href="admin.html">Admin</a>
+    </nav>
+</header>
+
+<div class="container">
+    <div class="page-title">Active Masterclasses</div>
+
+    <div id="loading" style="text-align:center;padding:40px;color:#888;">
+        <span class="spinner"></span>&nbsp; Loading masterclasses…
+    </div>
+
+    <div id="masterclass-table-wrap" style="display:none;overflow-x:auto;">
+        <table class="admin-table" id="masterclass-table">
+            <thead>
+                <tr>
+                    <th class="cb-col"><input type="checkbox" id="select-all-cb" class="mc-select-cb" title="Select all"></th>
+                    <th>Masterclass Name</th>
+                    <th>Datasets</th>
+                    <th>Created</th>
+                    <th>Enter Data</th>
+                    <th>Summary</th>
+                </tr>
+            </thead>
+            <tbody id="masterclass-tbody"></tbody>
+        </table>
+    </div>
+
+    <!-- Appears when ≥2 masterclasses are checked -->
+    <div class="agg-bar" id="agg-bar" style="display:none;">
+        <span class="agg-label" id="agg-label">0 masterclasses selected</span>
+        <a id="agg-link" href="#" class="btn btn-primary btn-sm">View Combined Summary →</a>
+    </div>
+
+    <div id="empty-state" class="empty-state" style="display:none;">
+        <p style="font-size:1.1rem;margin-bottom:8px;">No masterclasses available yet.</p>
+        <p>An administrator can create one from the <a href="admin.html">Admin page</a>.</p>
+    </div>
+</div>
+
+<script src="js/main.js"></script>
+</body>
+</html>
