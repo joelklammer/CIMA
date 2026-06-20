@@ -43,6 +43,10 @@
         <div class="alert alert-error"   id="create-error"></div>
         <div class="alert alert-success" id="create-success"></div>
         <div class="form-row">
+            <div class="form-group">
+                <label for="mc-date">Date</label>
+                <input type="date" id="mc-date">
+            </div>
             <div class="form-group" style="flex:2;">
                 <label for="mc-name">Masterclass Name</label>
                 <input type="text" id="mc-name" placeholder="e.g. Spring 2025 – CERN Visit">
@@ -93,10 +97,11 @@
                 <thead>
                     <tr>
                         <th>Name</th>
+                        <th>Date</th>
                         <th>Datasets</th>
                         <th>Created</th>
                         <th>Summary</th>
-                        <th>Rename</th>
+                        <th>Edit</th>
                         <th>Archive</th>
                         <th>Delete</th>
                     </tr>
@@ -120,18 +125,22 @@
     </div>
 </div>
 
-<!-- Rename Modal -->
+<!-- Edit Modal -->
 <div class="login-overlay" id="rename-overlay" style="display:none;">
     <div class="login-box">
-        <h2>Rename Masterclass</h2>
+        <h2>Edit Masterclass</h2>
         <div class="alert alert-error" id="rename-error"></div>
+        <div class="form-group" style="margin-bottom:14px;">
+            <label for="rename-date-input">Date</label>
+            <input type="date" id="rename-date-input">
+        </div>
         <div class="form-group" style="margin-bottom:18px;">
-            <label for="rename-input">New Name</label>
-            <input type="text" id="rename-input" placeholder="Enter new masterclass name">
+            <label for="rename-input">Name</label>
+            <input type="text" id="rename-input" placeholder="Enter masterclass name">
         </div>
         <div style="display:flex;gap:10px;justify-content:flex-end;">
             <button class="btn btn-secondary" id="rename-cancel">Cancel</button>
-            <button class="btn btn-primary"   id="rename-confirm">Rename</button>
+            <button class="btn btn-primary"   id="rename-confirm">Save</button>
         </div>
     </div>
 </div>

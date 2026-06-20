@@ -10,6 +10,7 @@
     const createBtn       = document.getElementById('create-btn');
     const createError     = document.getElementById('create-error');
     const createSuccess   = document.getElementById('create-success');
+    const mcDate          = document.getElementById('mc-date');
     const mcName          = document.getElementById('mc-name');
     const mcDatasets      = document.getElementById('mc-datasets');
 
@@ -32,6 +33,7 @@
     const confirmDelete   = document.getElementById('confirm-delete');
 
     const renameOverlay   = document.getElementById('rename-overlay');
+    const renameDateInput = document.getElementById('rename-date-input');
     const renameInput     = document.getElementById('rename-input');
     const renameError     = document.getElementById('rename-error');
     const renameCancel    = document.getElementById('rename-cancel');
@@ -51,6 +53,14 @@
         el.textContent = msg;
         el.classList.add('show');
         setTimeout(() => el.classList.remove('show'), 5000);
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '—';
+        const [y, m, d] = dateStr.split('-').map(Number);
+        return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+            year: 'numeric', month: 'short', day: 'numeric'
+        });
     }
 
     // ── Auth ───────────────────────────────────────────────────────────────────
@@ -117,7 +127,7 @@
 
             mcTbody.innerHTML = '';
             for (const mc of list) {
-                const date       = new Date(mc.created_at).toLocaleString();
+                const createdAt  = new Date(mc.created_at).toLocaleString();
                 const isArchived = !!mc.archived;
                 const tr         = document.createElement('tr');
                 if (isArchived) tr.classList.add('archived-row');
@@ -125,12 +135,15 @@
                     <td>${escHtml(mc.name)}${isArchived
                         ? ' <span class="badge badge-archived">Archived</span>'
                         : ''}</td>
+                    <td style="white-space:nowrap;">${escHtml(formatDate(mc.event_date))}</td>
                     <td><span class="badge badge-blue">${mc.num_datasets}</span></td>
-                    <td style="font-size:.8rem;color:#666;">${date}</td>
+                    <td style="font-size:.8rem;color:#666;">${createdAt}</td>
                     <td><a href="summary.html?id=${mc.id}" class="btn btn-outline btn-sm"
                            target="_blank">Summary</a></td>
                     <td><button class="btn btn-secondary btn-sm row-rename-btn"
-                                data-id="${mc.id}" data-name="${escHtml(mc.name)}">Rename</button></td>
+                                data-id="${mc.id}"
+                                data-name="${escHtml(mc.name)}"
+                                data-date="${mc.event_date || ''}">Edit</button></td>
                     <td>${isArchived
                         ? `<button class="btn btn-success btn-sm row-unarchive-btn"
                                    data-id="${mc.id}" data-name="${escHtml(mc.name)}">Unarchive</button>`
@@ -170,8 +183,9 @@
 
             mcTbody.querySelectorAll('.row-rename-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    pendingRenameId       = parseInt(btn.dataset.id);
-                    renameInput.value     = btn.dataset.name;
+                    pendingRenameId         = parseInt(btn.dataset.id);
+                    renameDateInput.value   = btn.dataset.date || '';
+                    renameInput.value       = btn.dataset.name;
                     renameError.classList.remove('show');
                     renameOverlay.style.display = 'flex';
                     renameInput.focus();
@@ -218,7 +232,7 @@
         }
     });
 
-    // ── Rename Masterclass ─────────────────────────────────────────────────────
+    // ── Edit Masterclass ───────────────────────────────────────────────────────
     renameCancel.addEventListener('click', () => {
         renameOverlay.style.display = 'none';
         pendingRenameId = null;
@@ -226,19 +240,21 @@
 
     async function doRename() {
         if (!pendingRenameId) return;
-        const name = renameInput.value.trim();
-        if (!name) { showAlert(renameError, 'Please enter a name.'); return; }
+        const name       = renameInput.value.trim();
+        const event_date = renameDateInput.value;
+        if (!name)       { showAlert(renameError, 'Please enter a name.'); return; }
+        if (!event_date) { showAlert(renameError, 'Please select a date.'); return; }
 
         renameConfirm.disabled = true;
         try {
             const resp = await fetch(`/api/masterclasses/${pendingRenameId}`, {
                 method:  'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ name })
+                body:    JSON.stringify({ name, event_date })
             });
             const data = await resp.json();
             if (!resp.ok) {
-                showAlert(renameError, data.error || 'Rename failed.');
+                showAlert(renameError, data.error || 'Update failed.');
             } else {
                 renameOverlay.style.display = 'none';
                 pendingRenameId = null;
@@ -256,11 +272,13 @@
 
     // ── Create Masterclass ─────────────────────────────────────────────────────
     createBtn.addEventListener('click', async () => {
-        const name = mcName.value.trim();
-        const num  = parseInt(mcDatasets.value);
+        const event_date = mcDate.value;
+        const name       = mcName.value.trim();
+        const num        = parseInt(mcDatasets.value);
         createError.classList.remove('show');
         createSuccess.classList.remove('show');
 
+        if (!event_date)                        { showAlert(createError, 'Please select a date.'); return; }
         if (!name)                              { showAlert(createError, 'Please enter a masterclass name.'); return; }
         if (isNaN(num) || num < 1 || num > 100) { showAlert(createError, 'Dataset count must be between 1 and 100.'); return; }
 
@@ -269,13 +287,14 @@
             const resp = await fetch('/api/masterclasses', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ name, num_datasets: num })
+                body:    JSON.stringify({ name, event_date, num_datasets: num })
             });
             const data = await resp.json();
             if (!resp.ok) {
                 showAlert(createError, data.error || 'Failed to create');
             } else {
                 showAlert(createSuccess, `Masterclass "${data.name}" created successfully!`);
+                mcDate.value     = '';
                 mcName.value     = '';
                 mcDatasets.value = '5';
                 loadMasterclasses();

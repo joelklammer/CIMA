@@ -76,7 +76,8 @@ const pool = mysql.createPool({
     connectionLimit:    15,   // per worker process
     queueLimit:         50,   // reject (don't hang) if >50 requests are waiting
     enableKeepAlive:    true,
-    keepAliveInitialDelay: 10000
+    keepAliveInitialDelay: 10000,
+    dateStrings: ['DATE']  // return DATE columns as 'YYYY-MM-DD' strings; leave TIMESTAMP as JS Date
 });
 
 // Log pool-level errors so they appear in PM2 logs instead of crashing silently
@@ -186,8 +187,8 @@ app.get('/api/masterclasses', async (req, res) => {
         const showAll = req.query.all === '1' && req.session && req.session.isAdmin;
         const [rows] = await pool.query(
             showAll
-                ? 'SELECT * FROM masterclasses ORDER BY archived ASC, created_at DESC'
-                : 'SELECT * FROM masterclasses WHERE archived = 0 ORDER BY created_at DESC'
+                ? 'SELECT * FROM masterclasses ORDER BY archived ASC, event_date DESC, name'
+                : 'SELECT * FROM masterclasses WHERE archived = 0 ORDER BY event_date DESC, name'
         );
         res.json(rows);
     } catch (err) {
@@ -208,9 +209,12 @@ app.get('/api/masterclasses/:id', async (req, res) => {
 });
 
 app.post('/api/masterclasses', requireAdmin, async (req, res) => {
-    const { name, num_datasets } = req.body;
-    if (!name || !num_datasets) {
-        return res.status(400).json({ error: 'Name and dataset count required' });
+    const { name, event_date, num_datasets } = req.body;
+    if (!name || !event_date || !num_datasets) {
+        return res.status(400).json({ error: 'Name, date, and dataset count required' });
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(event_date)) {
+        return res.status(400).json({ error: 'Invalid date format (expected YYYY-MM-DD)' });
     }
     const n = parseInt(num_datasets);
     if (isNaN(n) || n < 1 || n > 100) {
@@ -218,10 +222,10 @@ app.post('/api/masterclasses', requireAdmin, async (req, res) => {
     }
     try {
         const [result] = await pool.query(
-            'INSERT INTO masterclasses (name, num_datasets) VALUES (?, ?)',
-            [name.trim(), n]
+            'INSERT INTO masterclasses (name, event_date, num_datasets) VALUES (?, ?, ?)',
+            [name.trim(), event_date, n]
         );
-        res.json({ id: result.insertId, name: name.trim(), num_datasets: n });
+        res.json({ id: result.insertId, name: name.trim(), event_date, num_datasets: n });
     } catch (err) {
         apiError(res, 500, 'Server error', err);
     }
@@ -237,15 +241,18 @@ app.delete('/api/masterclasses/:id', requireAdmin, async (req, res) => {
 });
 
 app.patch('/api/masterclasses/:id', requireAdmin, async (req, res) => {
-    const { name } = req.body;
+    const { name, event_date } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ error: 'Name is required' });
+    if (!event_date || !/^\d{4}-\d{2}-\d{2}$/.test(event_date)) {
+        return res.status(400).json({ error: 'Valid date is required (YYYY-MM-DD)' });
+    }
     try {
         const [result] = await pool.query(
-            'UPDATE masterclasses SET name = ? WHERE id = ?',
-            [name.trim(), req.params.id]
+            'UPDATE masterclasses SET name = ?, event_date = ? WHERE id = ?',
+            [name.trim(), event_date, req.params.id]
         );
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Not found' });
-        res.json({ success: true, name: name.trim() });
+        res.json({ success: true });
     } catch (err) {
         apiError(res, 500, 'Server error', err);
     }
