@@ -316,68 +316,178 @@ challenge requests (used for certificate renewal).
 
 ## Installation
 
-### Prerequisites
+Tested on **Debian 12 (Bookworm)** and **Debian 13 (Trixie)**.  All commands
+below assume a non-root user with `sudo` access.
 
-- Node.js 18+
-- MariaDB 10.6+ (or MySQL 8+)
-- Nginx
-- PM2 (`npm install -g pm2`)
-- Certbot (production only)
+### 1. Install system dependencies
 
-### Steps
-
-**1. Clone the repository**
 ```bash
-git clone https://github.com/joelklammer/CIMA.git
-cd CIMA
+sudo apt update && sudo apt upgrade -y
+
+# Node.js 22 via NodeSource
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# MariaDB
+sudo apt install -y mariadb-server
+sudo systemctl enable --now mariadb
+
+# Nginx
+sudo apt install -y nginx
+sudo systemctl enable --now nginx
+
+# Certbot (Let's Encrypt)
+sudo apt install -y certbot python3-certbot-nginx
+
+# PM2 process manager (global)
+sudo npm install -g pm2
+```
+
+### 2. Create a dedicated application user
+
+Running the app as its own unprivileged user keeps it isolated from the rest of
+the system.
+
+```bash
+sudo adduser --disabled-password --gecos "" cima
+sudo -u cima -i          # switch to the cima user for the remaining steps
+```
+
+### 3. Clone the repository
+
+```bash
+git clone https://github.com/joelklammer/CIMA.git ~/cima
+cd ~/cima
 npm install
 ```
 
-**2. Create the `.env` file**
+### 4. Create the `.env` file
+
 ```bash
 cp .env.example .env
-# Edit .env with your database credentials and a strong SESSION_SECRET
+nano .env
 ```
 
-**3. Create the database user** (run as MariaDB root, once)
+Set at minimum:
+
+```
+DB_USER=cima_app
+DB_PASSWORD=<strong password matching step 5>
+SESSION_SECRET=<long random string, e.g. output of: openssl rand -hex 64>
+NODE_ENV=production
+```
+
+### 5. Set up MariaDB
+
+On Debian, MariaDB's root account uses unix socket authentication by default,
+so connect without a password using `sudo mariadb`.
+
 ```bash
-sudo mariadb < db/create-mariadb-user.sql
-# Edit the file first to set a strong password for cima_app
+# Create the application database user
+# Edit db/create-mariadb-user.sql first: replace 'StrongPasswordHere'
+# with the same password you put in .env
+exit                            # back to your sudo-capable user
+sudo mariadb < /home/cima/cima/db/create-mariadb-user.sql
+sudo -u cima -i                 # switch back to the cima user
+cd ~/cima
 ```
 
-**4. Run the setup script**
+Run the setup script to create the database schema and default admin account:
+
 ```bash
 npm run setup
-# Creates the database, tables, and default admin user
-# Default login: username=admin  password=admin123
-# Change the password immediately after first login
 ```
 
-**5. Configure Nginx**
+Output will confirm the schema was applied and show the default credentials:
+- **Username:** `admin`
+- **Password:** `admin123`
+
+> **Important:** Log in to `/admin.html` immediately after deployment and
+> change the password using the Change Admin Password form.
+
+### 6. Configure Nginx
+
+Back as your sudo-capable user:
+
 ```bash
-sudo cp nginx/cima.conf /etc/nginx/sites-available/cima
+exit    # leave the cima user shell
+```
+
+Edit `nginx/cima.conf` before copying it — replace every occurrence of
+`yourdomain.com` with your actual domain, and update the `root` directive to
+point to the application's public folder:
+
+```nginx
+root /home/cima/cima/public;
+```
+
+Then install the config:
+
+```bash
+sudo cp /home/cima/cima/nginx/cima.conf /etc/nginx/sites-available/cima
 sudo ln -s /etc/nginx/sites-available/cima /etc/nginx/sites-enabled/cima
-# Edit the file: replace 'yourdomain.com' and the root path
+sudo rm -f /etc/nginx/sites-enabled/default   # remove the default placeholder
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-**6. Obtain a TLS certificate**
+### 7. Obtain a TLS certificate
+
+Your domain's DNS A (and AAAA) records must already point to this server
+before running Certbot.
+
 ```bash
 sudo certbot --nginx -d yourdomain.com
 ```
 
-**7. Start the application**
+Certbot edits the Nginx config automatically and sets up a systemd timer for
+automatic renewal.  Verify renewal works:
+
 ```bash
+sudo certbot renew --dry-run
+```
+
+### 8. Start the application with PM2
+
+Switch back to the `cima` user:
+
+```bash
+sudo -u cima -i
+cd ~/cima
 pm2 start ecosystem.config.js --env production
-pm2 save      # persist across reboots
-pm2 startup   # generate and run the systemd startup command
+pm2 save        # save the process list so PM2 restores it after a reboot
+```
+
+Configure PM2 to start automatically on boot via systemd:
+
+```bash
+pm2 startup systemd -u cima --hp /home/cima
+```
+
+PM2 will print a `sudo env PATH=... pm2 startup ...` command — copy and run
+that command as your sudo-capable user to install the systemd unit.
+
+Verify all four workers are running:
+
+```bash
+pm2 status
+pm2 logs --lines 20
 ```
 
 ### Database migrations
 
 When upgrading from a version that predates the `archived` column:
+
 ```bash
-sudo mariadb cima < db/migrate-add-archived.sql
+sudo mariadb cima < /home/cima/cima/db/migrate-add-archived.sql
+pm2 restart cima
+```
+
+### Deploying updates
+
+```bash
+cd ~/cima
+git pull
+npm install          # only needed if package.json changed
 pm2 restart cima
 ```
 
@@ -393,24 +503,32 @@ Copy `.env.example` to `.env` and fill in all values before starting the server.
 | `DB_USER` | No | Database user (default: `root`) |
 | `DB_PASSWORD` | No | Database password (default: empty) |
 | `DB_NAME` | No | Database name (default: `cima`) |
-| `SESSION_SECRET` | **Yes** (production) | Random string used to sign session cookies — must be long and secret |
-| `PORT` | No | HTTP port the Node server listens on (default: 3000) |
+| `SESSION_SECRET` | **Yes** (production) | Random string used to sign session cookies — generate with `openssl rand -hex 64` |
+| `PORT` | No | HTTP port the Node server listens on (default: `3000`) |
 | `NODE_ENV` | No | Set to `production` to enable HTTPS-only cookies and hide internal error details |
 
 ---
 
 ## Development
 
+These instructions are for running a local copy on a development machine.
+
 ```bash
+# Ensure MariaDB is running
+sudo systemctl start mariadb
+
+# Install dependencies
+npm install
+
+# Run the setup script if the database doesn't exist yet
+npm run setup
+
 # Start the server with auto-restart on file changes
 npm run dev
-
-# Run against a local MariaDB instance — ensure it is running first
-brew services start mariadb   # macOS with Homebrew
-
-# Re-run database setup (safe to run multiple times — uses IF NOT EXISTS / ON DUPLICATE KEY)
-npm run setup
 ```
 
 The dev server binds to all interfaces (`0.0.0.0` / `::`) so it is reachable
 at both `http://localhost:3000` and `http://127.0.0.1:3000`.
+
+`NODE_ENV` is not set in development, so cookies do not require HTTPS and
+internal error messages are shown in API responses.
