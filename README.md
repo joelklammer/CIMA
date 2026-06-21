@@ -1,7 +1,7 @@
 # CIMA — CMS Instrument for Masterclass Analysis
 
 A web application for high-school physics masterclasses run through the
-[QuarkNet](https://quarknet.org) programme.  Students examine simulated CMS
+[QuarkNet](https://quarknet.org) program.  Students examine simulated CMS
 collision events, classify each one by its final state and primary particle,
 and record reconstructed masses.  Teachers use the admin interface to create
 and manage masterclass sessions; the summary page aggregates the results into
