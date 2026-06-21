@@ -18,9 +18,10 @@ tables and mass-distribution histograms.
 5. [MariaDB Database](#mariadb-database)
 6. [PM2 Cluster Configuration](#pm2-cluster-configuration)
 7. [Nginx Reverse Proxy](#nginx-reverse-proxy)
-8. [Installation](#installation)
-9. [Environment Variables](#environment-variables)
-10. [Development](#development)
+8. [Capacity and Scalability](#capacity-and-scalability)
+9. [Installation](#installation)
+10. [Environment Variables](#environment-variables)
+11. [Development](#development)
 
 ---
 
@@ -311,6 +312,52 @@ challenge requests (used for certificate renewal).
   burst of 3 (in addition to Express's own rate limiter).
 - Gzip compression enabled for text, CSS, JSON, and JavaScript.
 - `.env` and `.git` paths are blocked with `deny all`.
+
+---
+
+## Capacity and Scalability
+
+The current architecture is well suited for a typical masterclass event with
+**up to ~150 simultaneous users**.
+
+### What handles the load
+
+| Layer | How it scales |
+|---|---|
+| **Nginx** | Serves all static assets (HTML, CSS, JS, Chart.js) directly from disk with a 7-day cache header — these requests never reach Node.js. After the first page load, browsers serve assets from their local cache. |
+| **PM2 (4 workers)** | Node.js is non-blocking; each worker can interleave hundreds of concurrent async I/O operations. Four workers cover all available CPU cores and share incoming connections via the OS kernel. |
+| **Connection pool (60 conns)** | Each of the 60 pooled DB connections turns over roughly 200 short queries per second (typical query latency < 5 ms). This comfortably serves bursts of simultaneous data-entry saves from many students. |
+| **MariaDB sessions** | Because sessions are stored in MariaDB (not per-process memory), any worker can handle any request — there is no sticky-session requirement on Nginx. |
+
+### Known limits
+
+- **`queueLimit: 50`** — if more than 50 requests are simultaneously waiting
+  for a DB connection (e.g., all students click Save in the exact same
+  millisecond), excess requests are rejected rather than queued indefinitely.
+  In practice, student data-entry actions are naturally staggered enough that
+  this threshold is unlikely to be reached.
+
+- **Server RAM** — with `max_memory_restart: 500 MB` per worker, the four
+  workers can collectively consume up to ~2 GB before PM2 triggers a restart.
+  A server with at least 4 GB RAM is recommended to leave headroom for the OS,
+  MariaDB, and Nginx.
+
+- **MariaDB `max_connections`** — the default is 151. The app uses ~72
+  connections (60 app + 12 session store). If you run additional services on
+  the same database server, verify the total stays below the limit:
+  `SHOW VARIABLES LIKE 'max_connections';`
+
+### Recommended minimum server specs
+
+| Resource | Minimum | Comfortable |
+|---|---|---|
+| CPU cores | 2 | 4 |
+| RAM | 2 GB | 4 GB |
+| Disk | 10 GB | 20 GB |
+
+For a single-school masterclass (≤ 150 students), a modest 2-core / 4 GB
+virtual machine is sufficient.  Larger events or multiple concurrent
+masterclasses sharing the same server benefit from 4 cores and 8 GB.
 
 ---
 
