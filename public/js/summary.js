@@ -38,6 +38,10 @@
     const chart4Container = document.getElementById('chart4-container');
     const hist4Controls   = document.getElementById('hist4-controls');
 
+    // Export buttons
+    const exportCsv2Btn   = document.getElementById('export-csv2-btn');
+    const exportCsv4Btn   = document.getElementById('export-csv4-btn');
+
     let hist2Chart = null;
     let hist4Chart = null;
     let twoLeptonMasses  = [];
@@ -54,6 +58,24 @@
         pageLoading.style.display = 'none';
         errorMsg.textContent      = msg;
         pageError.style.display   = 'block';
+    }
+
+    function downloadCsv(allMasses, fsSet, filename) {
+        const rows = ['Final State,Mass (GeV)'];
+        for (const entry of (allMasses || [])) {
+            if (entry && entry.mass !== undefined && fsSet.has(entry.finalState)) {
+                rows.push(`${entry.finalState},${entry.mass}`);
+            }
+        }
+        const blob = new Blob([rows.join('\r\n')], { type: 'text/csv' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 
     // ── Mode detection ─────────────────────────────────────────────────────────
@@ -276,10 +298,13 @@
         hist2Controls.style.display   = 'none';
         noMass2Msg.style.display      = 'block';
         chart2Container.style.display = 'none';
+        exportCsv2Btn.style.display   = 'none';
     } else {
         setAutoRange(hist2MinEl, hist2MaxEl, hist2BinEl, twoLeptonMasses);
         drawHistogram2();
         updateHist2Btn.addEventListener('click', drawHistogram2);
+        exportCsv2Btn.addEventListener('click', () =>
+            downloadCsv(masses, TWO_LEPTON_FS, 'Two Lepton Mass.cvs'));
     }
 
     // ── Four-Lepton Histogram ──────────────────────────────────────────────────
@@ -287,10 +312,13 @@
         hist4Controls.style.display   = 'none';
         noMass4Msg.style.display      = 'block';
         chart4Container.style.display = 'none';
+        exportCsv4Btn.style.display   = 'none';
     } else {
         setAutoRange(hist4MinEl, hist4MaxEl, hist4BinEl, fourLeptonMasses);
         drawHistogram4();
         updateHist4Btn.addEventListener('click', drawHistogram4);
+        exportCsv4Btn.addEventListener('click', () =>
+            downloadCsv(masses, FOUR_LEPTON_FS, 'Four Lepton Mass.cvs'));
     }
 
     // ── Histogram helpers ──────────────────────────────────────────────────────
