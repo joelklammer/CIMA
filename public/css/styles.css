@@ -564,7 +564,7 @@ tfoot tr.totals-row td.totals-label {
 
 /* ── Date Group Accordion (index page, date-organized branch) ───────────────── */
 .date-group {
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 
 .date-group-header {
