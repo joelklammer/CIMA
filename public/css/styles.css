@@ -622,8 +622,8 @@ tfoot tr.totals-row td.totals-label {
 .date-group-body[hidden] { display: none; }
 
 /* Compact table rows inside the accordion (index page only) */
-.date-group-body .admin-table th { padding: 6px 10px; font-size: .8rem; }
-.date-group-body .admin-table td { padding: 5px 10px; font-size: .82rem; }
+.date-group-body .admin-table th { padding: 4px 10px; font-size: .8rem; }
+.date-group-body .admin-table td { padding: 4px 10px; font-size: .82rem; }
 .date-group-body .btn-sm { padding: 3px 8px; font-size: .74rem; }
 
 /* ── Aggregation action bar (index page) ────────────────────────────────────── */
