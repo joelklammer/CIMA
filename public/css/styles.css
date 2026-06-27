@@ -293,6 +293,11 @@ table.event-table tbody td:nth-child(12),
 table.event-table tfoot  td:nth-child(12) {
     border-right: 2px solid #555 !important;
 }
+table.event-table thead tr:first-child th:nth-child(4),
+table.event-table tbody td:nth-child(13),
+table.event-table tfoot  td:nth-child(13) {
+    border-right: 2px solid #555 !important;
+}
 .event-table-wrap {
     background: #fff;
     border-radius: 8px;
