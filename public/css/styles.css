@@ -276,6 +276,23 @@ header nav a:hover { color: #fff; }
 .save-status.hidden  { visibility: hidden; }
 
 /* ── Event Table ────────────────────────────────────────────────────────────── */
+/* Vertical separators between Final State / Primary State / Mass column groups */
+table.event-table th.group-fs,
+table.event-table th.group-ps {
+    border-right: 2px solid #555 !important;
+}
+table.event-table thead tr:nth-child(2) th:nth-child(7),
+table.event-table thead tr:nth-child(2) th:nth-child(11) {
+    border-right: 2px solid #555 !important;
+}
+table.event-table tbody td:nth-child(8),
+table.event-table tfoot  td:nth-child(8) {
+    border-right: 2px solid #555 !important;
+}
+table.event-table tbody td:nth-child(12),
+table.event-table tfoot  td:nth-child(12) {
+    border-right: 2px solid #555 !important;
+}
 .event-table-wrap {
     background: #fff;
     border-radius: 8px;
