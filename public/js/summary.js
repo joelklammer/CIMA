@@ -454,6 +454,8 @@
     // ── Print support ──────────────────────────────────────────────────────────
     // Lock chart canvas dimensions before the browser reflows for print,
     // then restore responsive sizing afterwards.
+    document.getElementById('print-pdf-btn').addEventListener('click', () => window.print());
+
     window.addEventListener('beforeprint', () => {
         if (hist2Chart) hist2Chart.resize(520, 200);
         if (hist4Chart) hist4Chart.resize(520, 200);
