@@ -450,4 +450,16 @@
         hist4Chart = new Chart(document.getElementById('mass-histogram-4'),
             makeChartConfig(labels, counts, title, binWidth));
     }
+
+    // ── Print support ──────────────────────────────────────────────────────────
+    // Lock chart canvas dimensions before the browser reflows for print,
+    // then restore responsive sizing afterwards.
+    window.addEventListener('beforeprint', () => {
+        if (hist2Chart) hist2Chart.resize(520, 200);
+        if (hist4Chart) hist4Chart.resize(520, 200);
+    });
+    window.addEventListener('afterprint', () => {
+        if (hist2Chart) hist2Chart.resize();
+        if (hist4Chart) hist4Chart.resize();
+    });
 })();

@@ -656,6 +656,40 @@ tfoot tr.totals-row td.totals-label {
     vertical-align: middle;
 }
 
+/* ── Print / Create PDF ─────────────────────────────────────────────────────── */
+@media print {
+    @page { size: A4 portrait; margin: 1.5cm; }
+
+    /* Hide everything that isn't content */
+    header,
+    .no-print,
+    .histogram-controls { display: none !important; }
+
+    body      { background: #fff; }
+    .container { padding: 0; max-width: 100%; }
+
+    .card {
+        box-shadow: none;
+        border: 1px solid #ccc;
+        page-break-inside: avoid;
+        break-inside: avoid;
+        margin-bottom: 10px;
+        padding: 12px 16px;
+    }
+
+    .summary-grid { gap: 10px; margin-bottom: 10px; }
+
+    .page-title { font-size: 1.1rem; margin-bottom: 10px; }
+
+    /* Shrink charts to fit portrait width */
+    .chart-container { height: 200px !important; }
+
+    .totals-table th,
+    .totals-table td,
+    .admin-table  th,
+    .admin-table  td { padding: 4px 8px; font-size: .78rem; }
+}
+
 /* ── Responsive tweaks ──────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
     header h1 { font-size: 1rem; }

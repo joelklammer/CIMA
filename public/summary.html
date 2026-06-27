@@ -28,8 +28,9 @@
 
     <div id="page-content" style="display:none;">
 
-        <a id="back-link" href="#" class="summary-back">← Back to Masterclass</a>
+        <a id="back-link" href="#" class="summary-back no-print">← Back to Masterclass</a>
         <div class="page-title" id="mc-title"></div>
+        <button class="btn btn-secondary btn-sm no-print" id="print-pdf-btn" onclick="window.print()" style="margin:-10px 0 22px;">Create PDF</button>
 
         <div class="summary-grid">
             <!-- Final State Totals -->
@@ -128,7 +129,7 @@
             <div class="chart-container" id="chart2-container">
                 <canvas id="mass-histogram-2"></canvas>
             </div>
-            <div style="margin-top:14px;">
+            <div style="margin-top:14px;" class="no-print">
                 <button class="btn btn-secondary btn-sm" id="export-csv2-btn">Export Data (CVS)</button>
             </div>
         </div>
@@ -160,7 +161,7 @@
             <div class="chart-container" id="chart4-container">
                 <canvas id="mass-histogram-4"></canvas>
             </div>
-            <div style="margin-top:14px;">
+            <div style="margin-top:14px;" class="no-print">
                 <button class="btn btn-secondary btn-sm" id="export-csv4-btn">Export Data (CVS)</button>
             </div>
         </div>
