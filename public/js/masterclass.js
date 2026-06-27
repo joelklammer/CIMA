@@ -213,6 +213,8 @@
         const massEl = document.getElementById(`mass_${n}`);
         massEl.value    = '';
         massEl.disabled = true;
+        massEl.classList.remove('mass-invalid');
+        massEl.title = '';
     }
 
     function restoreRowUI(n) {
@@ -271,8 +273,20 @@
 
     function onMassInput(n) {
         if (!eventData[n]) eventData[n] = { fs: null, ps: null, mass: null };
-        const val = document.getElementById(`mass_${n}`).value;
-        eventData[n].mass = val !== '' ? parseFloat(val) : null;
+        const massEl = document.getElementById(`mass_${n}`);
+        const parsed = massEl.value !== '' ? parseFloat(massEl.value) : null;
+
+        if (parsed !== null && parsed <= 0) {
+            massEl.classList.add('mass-invalid');
+            massEl.title = 'Mass must be greater than zero';
+            eventData[n].mass = null;
+            clearTimeout(massTimers[n]);
+            return;
+        }
+
+        massEl.classList.remove('mass-invalid');
+        massEl.title = '';
+        eventData[n].mass = parsed;
 
         // Debounce: save 800ms after user stops typing
         clearTimeout(massTimers[n]);
@@ -280,8 +294,23 @@
     }
 
     function onMassCommit(n) {
-        // Fire immediately on blur/Enter
         clearTimeout(massTimers[n]);
+        const massEl = document.getElementById(`mass_${n}`);
+        const parsed = massEl.value !== '' ? parseFloat(massEl.value) : null;
+
+        if (parsed !== null && parsed <= 0) {
+            // Clear the invalid value so the field is clean when the user returns
+            massEl.value = '';
+            massEl.classList.remove('mass-invalid');
+            massEl.title = '';
+            if (!eventData[n]) eventData[n] = { fs: null, ps: null, mass: null };
+            eventData[n].mass = null;
+            saveEvent(n);
+            return;
+        }
+
+        massEl.classList.remove('mass-invalid');
+        massEl.title = '';
         if (eventData[n] && eventData[n].ps === 'NP(Z,H)') saveEvent(n);
     }
 

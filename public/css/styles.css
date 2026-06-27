@@ -376,6 +376,11 @@ td.mass-cell { min-width: 80px; }
 }
 .mass-input:focus { outline: none; box-shadow: 0 0 0 2px rgba(0,48,135,.2); }
 .mass-input:disabled { cursor: not-allowed; }
+.mass-input.mass-invalid {
+    border-color: #c0392b !important;
+    background:   #fdecea !important;
+    color:        #c0392b !important;
+}
 
 td.clear-cell { min-width: 32px; }
 .btn-clear-row {
