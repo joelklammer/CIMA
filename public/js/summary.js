@@ -67,7 +67,7 @@
                 rows.push(`${entry.finalState},${entry.mass}`);
             }
         }
-        const csvContent = rows.join('\r\n');
+        const csvContent = '﻿' + rows.join('\r\n'); // BOM tells Excel this is UTF-8
 
         // Use the File System Access API when available (Chrome/Edge) so the
         // browser shows a native Save As dialog letting the user choose location.
