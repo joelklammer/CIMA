@@ -64,10 +64,11 @@
         const rows = ['Final State,Mass (GeV)'];
         for (const entry of (allMasses || [])) {
             if (entry && entry.mass !== undefined && fsSet.has(entry.finalState)) {
-                rows.push(`${entry.finalState},${entry.mass}`);
+                const fs = entry.finalState.replace(/μ/g, 'mu').replace(/ν/g, 'nu');
+                rows.push(`${fs},${entry.mass}`);
             }
         }
-        const csvContent = '﻿' + rows.join('\r\n'); // BOM tells Excel this is UTF-8
+        const csvContent = '﻿' + rows.join('\r\n'); // BOM for Excel UTF-8 detection
 
         // Use the File System Access API when available (Chrome/Edge) so the
         // browser shows a native Save As dialog letting the user choose location.
