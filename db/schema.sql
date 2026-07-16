@@ -12,9 +12,10 @@ CREATE TABLE IF NOT EXISTS admin_users (
 
 CREATE TABLE IF NOT EXISTS masterclasses (
     id           INT AUTO_INCREMENT PRIMARY KEY,
-    name         VARCHAR(255) NOT NULL,
-    event_date   DATE         NOT NULL,
-    num_datasets INT          NOT NULL,
+    name          VARCHAR(255) NOT NULL,
+    event_date    DATE         NOT NULL,
+    start_dataset INT          NOT NULL DEFAULT 1,
+    end_dataset   INT          NOT NULL DEFAULT 5,
     archived     TINYINT(1)   NOT NULL DEFAULT 0,
     created_at   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -12,7 +12,8 @@
     const createSuccess   = document.getElementById('create-success');
     const mcDate          = document.getElementById('mc-date');
     const mcName          = document.getElementById('mc-name');
-    const mcDatasets      = document.getElementById('mc-datasets');
+    const mcStart         = document.getElementById('mc-start');
+    const mcEnd           = document.getElementById('mc-end');
 
     const pwCurrent       = document.getElementById('pw-current');
     const pwNew           = document.getElementById('pw-new');
@@ -32,12 +33,14 @@
     const confirmCancel   = document.getElementById('confirm-cancel');
     const confirmDelete   = document.getElementById('confirm-delete');
 
-    const renameOverlay   = document.getElementById('rename-overlay');
-    const renameDateInput = document.getElementById('rename-date-input');
-    const renameInput     = document.getElementById('rename-input');
-    const renameError     = document.getElementById('rename-error');
-    const renameCancel    = document.getElementById('rename-cancel');
-    const renameConfirm   = document.getElementById('rename-confirm');
+    const renameOverlay    = document.getElementById('rename-overlay');
+    const renameDateInput  = document.getElementById('rename-date-input');
+    const renameInput      = document.getElementById('rename-input');
+    const renameStartInput = document.getElementById('rename-start-input');
+    const renameEndInput   = document.getElementById('rename-end-input');
+    const renameError      = document.getElementById('rename-error');
+    const renameCancel     = document.getElementById('rename-cancel');
+    const renameConfirm    = document.getElementById('rename-confirm');
 
     let pendingDeleteId = null;
     let pendingRenameId = null;
@@ -136,14 +139,16 @@
                         ? ' <span class="badge badge-archived">Archived</span>'
                         : ''}</td>
                     <td style="white-space:nowrap;">${escHtml(formatDate(mc.event_date))}</td>
-                    <td><span class="badge badge-blue">${mc.num_datasets}</span></td>
+                    <td><span class="badge badge-blue">${mc.start_dataset}–${mc.end_dataset}</span></td>
                     <td style="font-size:.8rem;color:#666;">${createdAt}</td>
                     <td><a href="summary.html?id=${mc.id}" class="btn btn-outline btn-sm"
                            target="_blank">Summary</a></td>
                     <td><button class="btn btn-secondary btn-sm row-rename-btn"
                                 data-id="${mc.id}"
                                 data-name="${escHtml(mc.name)}"
-                                data-date="${mc.event_date || ''}">Edit</button></td>
+                                data-date="${mc.event_date || ''}"
+                                data-start="${mc.start_dataset || 1}"
+                                data-end="${mc.end_dataset || 1}">Edit</button></td>
                     <td>${isArchived
                         ? `<button class="btn btn-success btn-sm row-unarchive-btn"
                                    data-id="${mc.id}" data-name="${escHtml(mc.name)}">Unarchive</button>`
@@ -183,9 +188,11 @@
 
             mcTbody.querySelectorAll('.row-rename-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    pendingRenameId         = parseInt(btn.dataset.id);
-                    renameDateInput.value   = btn.dataset.date || '';
-                    renameInput.value       = btn.dataset.name;
+                    pendingRenameId            = parseInt(btn.dataset.id);
+                    renameDateInput.value      = btn.dataset.date  || '';
+                    renameInput.value          = btn.dataset.name;
+                    renameStartInput.value     = btn.dataset.start || 1;
+                    renameEndInput.value       = btn.dataset.end   || 1;
                     renameError.classList.remove('show');
                     renameOverlay.style.display = 'flex';
                     renameInput.focus();
@@ -240,17 +247,28 @@
 
     async function doRename() {
         if (!pendingRenameId) return;
-        const name       = renameInput.value.trim();
-        const event_date = renameDateInput.value;
+        const name         = renameInput.value.trim();
+        const event_date   = renameDateInput.value;
+        const start_dataset = parseInt(renameStartInput.value);
+        const end_dataset   = parseInt(renameEndInput.value);
         if (!name)       { showAlert(renameError, 'Please enter a name.'); return; }
         if (!event_date) { showAlert(renameError, 'Please select a date.'); return; }
+        if (isNaN(start_dataset) || start_dataset < 1 || start_dataset > 100) {
+            showAlert(renameError, 'Start dataset must be between 1 and 100.'); return;
+        }
+        if (isNaN(end_dataset) || end_dataset < 1 || end_dataset > 100) {
+            showAlert(renameError, 'End dataset must be between 1 and 100.'); return;
+        }
+        if (start_dataset > end_dataset) {
+            showAlert(renameError, 'Start dataset must not exceed end dataset.'); return;
+        }
 
         renameConfirm.disabled = true;
         try {
             const resp = await fetch(`/api/masterclasses/${pendingRenameId}`, {
                 method:  'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ name, event_date })
+                body:    JSON.stringify({ name, event_date, start_dataset, end_dataset })
             });
             const data = await resp.json();
             if (!resp.ok) {
@@ -272,31 +290,41 @@
 
     // ── Create Masterclass ─────────────────────────────────────────────────────
     createBtn.addEventListener('click', async () => {
-        const event_date = mcDate.value;
-        const name       = mcName.value.trim();
-        const num        = parseInt(mcDatasets.value);
+        const event_date    = mcDate.value;
+        const name          = mcName.value.trim();
+        const start_dataset = parseInt(mcStart.value);
+        const end_dataset   = parseInt(mcEnd.value);
         createError.classList.remove('show');
         createSuccess.classList.remove('show');
 
-        if (!event_date)                        { showAlert(createError, 'Please select a date.'); return; }
-        if (!name)                              { showAlert(createError, 'Please enter a masterclass name.'); return; }
-        if (isNaN(num) || num < 1 || num > 100) { showAlert(createError, 'Dataset count must be between 1 and 100.'); return; }
+        if (!event_date) { showAlert(createError, 'Please select a date.'); return; }
+        if (!name)       { showAlert(createError, 'Please enter a masterclass name.'); return; }
+        if (isNaN(start_dataset) || start_dataset < 1 || start_dataset > 100) {
+            showAlert(createError, 'Start dataset must be between 1 and 100.'); return;
+        }
+        if (isNaN(end_dataset) || end_dataset < 1 || end_dataset > 100) {
+            showAlert(createError, 'End dataset must be between 1 and 100.'); return;
+        }
+        if (start_dataset > end_dataset) {
+            showAlert(createError, 'Start dataset must not exceed end dataset.'); return;
+        }
 
         createBtn.disabled = true;
         try {
             const resp = await fetch('/api/masterclasses', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ name, event_date, num_datasets: num })
+                body:    JSON.stringify({ name, event_date, start_dataset, end_dataset })
             });
             const data = await resp.json();
             if (!resp.ok) {
                 showAlert(createError, data.error || 'Failed to create');
             } else {
                 showAlert(createSuccess, `Masterclass "${data.name}" created successfully!`);
-                mcDate.value     = '';
-                mcName.value     = '';
-                mcDatasets.value = '5';
+                mcDate.value  = '';
+                mcName.value  = '';
+                mcStart.value = '1';
+                mcEnd.value   = '5';
                 loadMasterclasses();
             }
         } catch (e) {

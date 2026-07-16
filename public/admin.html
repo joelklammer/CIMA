@@ -53,8 +53,12 @@
                 <input type="text" id="mc-name" placeholder="e.g. Spring 2025 – CERN Visit">
             </div>
             <div class="form-group">
-                <label for="mc-datasets">Number of Datasets</label>
-                <input type="number" id="mc-datasets" placeholder="e.g. 5" min="1" max="100" value="5">
+                <label for="mc-start">Start Dataset</label>
+                <input type="number" id="mc-start" min="1" max="100" value="1">
+            </div>
+            <div class="form-group">
+                <label for="mc-end">End Dataset</label>
+                <input type="number" id="mc-end" min="1" max="100" value="5">
             </div>
             <div style="padding-bottom:1px;">
                 <button class="btn btn-success" id="create-btn">+ Create</button>
@@ -135,9 +139,19 @@
             <label for="rename-date-input">Date</label>
             <input type="date" id="rename-date-input">
         </div>
-        <div class="form-group" style="margin-bottom:18px;">
+        <div class="form-group" style="margin-bottom:14px;">
             <label for="rename-input">Name</label>
             <input type="text" id="rename-input" placeholder="Enter masterclass name">
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:18px;">
+            <div class="form-group" style="flex:1;margin-bottom:0;">
+                <label for="rename-start-input">Start Dataset</label>
+                <input type="number" id="rename-start-input" min="1" max="100">
+            </div>
+            <div class="form-group" style="flex:1;margin-bottom:0;">
+                <label for="rename-end-input">End Dataset</label>
+                <input type="number" id="rename-end-input" min="1" max="100">
+            </div>
         </div>
         <div style="display:flex;gap:10px;justify-content:flex-end;">
             <button class="btn btn-secondary" id="rename-cancel">Cancel</button>

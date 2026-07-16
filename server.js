@@ -209,23 +209,24 @@ app.get('/api/masterclasses/:id', async (req, res) => {
 });
 
 app.post('/api/masterclasses', requireAdmin, async (req, res) => {
-    const { name, event_date, num_datasets } = req.body;
-    if (!name || !event_date || !num_datasets) {
-        return res.status(400).json({ error: 'Name, date, and dataset count required' });
+    const { name, event_date, start_dataset, end_dataset } = req.body;
+    if (!name || !event_date || start_dataset == null || end_dataset == null) {
+        return res.status(400).json({ error: 'Name, date, start dataset, and end dataset required' });
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(event_date)) {
         return res.status(400).json({ error: 'Invalid date format (expected YYYY-MM-DD)' });
     }
-    const n = parseInt(num_datasets);
-    if (isNaN(n) || n < 1 || n > 100) {
-        return res.status(400).json({ error: 'Dataset count must be 1–100' });
-    }
+    const s = parseInt(start_dataset);
+    const e = parseInt(end_dataset);
+    if (isNaN(s) || s < 1 || s > 100) return res.status(400).json({ error: 'Start dataset must be 1–100' });
+    if (isNaN(e) || e < 1 || e > 100) return res.status(400).json({ error: 'End dataset must be 1–100' });
+    if (s > e) return res.status(400).json({ error: 'Start dataset must not exceed end dataset' });
     try {
         const [result] = await pool.query(
-            'INSERT INTO masterclasses (name, event_date, num_datasets) VALUES (?, ?, ?)',
-            [name.trim(), event_date, n]
+            'INSERT INTO masterclasses (name, event_date, start_dataset, end_dataset) VALUES (?, ?, ?, ?)',
+            [name.trim(), event_date, s, e]
         );
-        res.json({ id: result.insertId, name: name.trim(), event_date, num_datasets: n });
+        res.json({ id: result.insertId, name: name.trim(), event_date, start_dataset: s, end_dataset: e });
     } catch (err) {
         apiError(res, 500, 'Server error', err);
     }
@@ -241,15 +242,20 @@ app.delete('/api/masterclasses/:id', requireAdmin, async (req, res) => {
 });
 
 app.patch('/api/masterclasses/:id', requireAdmin, async (req, res) => {
-    const { name, event_date } = req.body;
+    const { name, event_date, start_dataset, end_dataset } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ error: 'Name is required' });
     if (!event_date || !/^\d{4}-\d{2}-\d{2}$/.test(event_date)) {
         return res.status(400).json({ error: 'Valid date is required (YYYY-MM-DD)' });
     }
+    const s = parseInt(start_dataset);
+    const e = parseInt(end_dataset);
+    if (isNaN(s) || s < 1 || s > 100) return res.status(400).json({ error: 'Start dataset must be 1–100' });
+    if (isNaN(e) || e < 1 || e > 100) return res.status(400).json({ error: 'End dataset must be 1–100' });
+    if (s > e) return res.status(400).json({ error: 'Start dataset must not exceed end dataset' });
     try {
         const [result] = await pool.query(
-            'UPDATE masterclasses SET name = ?, event_date = ? WHERE id = ?',
-            [name.trim(), event_date, req.params.id]
+            'UPDATE masterclasses SET name = ?, event_date = ?, start_dataset = ?, end_dataset = ? WHERE id = ?',
+            [name.trim(), event_date, s, e, req.params.id]
         );
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Not found' });
         res.json({ success: true });

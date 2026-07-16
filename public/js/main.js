@@ -107,7 +107,7 @@
                         <input type="checkbox" class="mc-select-cb row-cb" data-id="${mc.id}">
                     </td>
                     <td class="mc-name-cell">${escHtml(mc.name)}</td>
-                    <td><span class="badge badge-blue">${mc.num_datasets} dataset${mc.num_datasets !== 1 ? 's' : ''}</span></td>
+                    <td><span class="badge badge-blue">Datasets ${mc.start_dataset}–${mc.end_dataset}</span></td>
                     <td><a href="masterclass.html?id=${mc.id}" class="btn btn-primary btn-sm">Enter Data →</a></td>
                     <td><a href="summary.html?id=${mc.id}"    class="btn btn-outline btn-sm">Summary →</a></td>`;
                 tbody.appendChild(tr);

@@ -51,12 +51,13 @@
     summaryLink.href      = `summary.html?id=${masterclassId}`;
 
     // Build dataset selector
-    for (let i = 1; i <= masterclass.num_datasets; i++) {
+    for (let i = masterclass.start_dataset; i <= masterclass.end_dataset; i++) {
         const opt = document.createElement('option');
         opt.value = i;
         opt.textContent = `Dataset ${i}`;
         datasetSelect.appendChild(opt);
     }
+    currentDataset = masterclass.start_dataset;
     datasetSelect.addEventListener('change', () => {
         flushPendingMassSaves();
         currentDataset = parseInt(datasetSelect.value);
@@ -69,7 +70,7 @@
     pageLoading.style.display = 'none';
     pageContent.style.display = 'block';
 
-    await loadDataset(1);
+    await loadDataset(masterclass.start_dataset);
 
     // ── Build Table Structure ──────────────────────────────────────────────────
     function buildTable() {
