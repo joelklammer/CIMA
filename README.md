@@ -78,8 +78,8 @@ Renders a 100-row table.  For each collision event the student selects:
 | **Mass [GeV]** | Numeric input — enabled only when Primary State is NP(Z,H) |
 
 A **Dataset** drop-down at the top lets the student switch between the datasets
-assigned to that masterclass (1 … `num_datasets`).  Changing the selection
-flushes any pending saves and reloads that dataset from the server.
+assigned to that masterclass (`start_dataset` … `end_dataset`).  Changing the
+selection flushes any pending saves and reloads that dataset from the server.
 
 Saves are automatic: every radio-button change fires immediately; mass inputs
 are debounced 800 ms and also saved on blur/Enter.  Saves are serialised
@@ -112,7 +112,7 @@ range is set automatically on first load using the actual data spread.
 ### `admin.html` — Administration
 Protected by a session-based login.  Provides:
 
-- **Create Masterclass** — name and number of datasets (1–100).
+- **Create Masterclass** — name, date, and a start/end dataset range (1–100).
 - **Rename Masterclass** — modal dialog pre-filled with the current name.
 - **Archive / Unarchive** — archived masterclasses are hidden from the home
   page but their data is preserved.  They can be reinstated at any time.
@@ -228,7 +228,9 @@ One row per masterclass session.
 |---|---|---|
 | `id` | INT AUTO_INCREMENT | Primary key |
 | `name` | VARCHAR(255) | Display name |
-| `num_datasets` | INT | How many datasets are assigned (1–100) |
+| `event_date` | DATE | Date of the masterclass event |
+| `start_dataset` | INT | First dataset number assigned (1–100) |
+| `end_dataset` | INT | Last dataset number assigned (1–100) |
 | `archived` | TINYINT(1) DEFAULT 0 | 0 = active, 1 = archived (hidden from home page) |
 | `created_at` | TIMESTAMP | Set automatically on INSERT |
 
@@ -241,7 +243,7 @@ on every save from the data-entry page.
 |---|---|---|
 | `id` | INT AUTO_INCREMENT | Primary key |
 | `masterclass_id` | INT | Foreign key → `masterclasses.id` ON DELETE CASCADE |
-| `dataset_num` | INT | Which dataset within the masterclass (1 … `num_datasets`) |
+| `dataset_num` | INT | Which dataset within the masterclass (`start_dataset` … `end_dataset`) |
 | `event_num` | INT | Which event within the dataset (1–100) |
 | `final_state` | VARCHAR(20) NULL | e.g. `'e-e'`, `'μ-μ'`, `'4e'` |
 | `primary_state` | VARCHAR(20) NULL | `'W+'`, `'W-'`, `'NP(Z,H)'`, or `'Zoo'` |
@@ -365,6 +367,70 @@ masterclasses sharing the same server benefit from 4 cores and 8 GB.
 
 Tested on **Debian 12 (Bookworm)** and **Debian 13 (Trixie)**.  All commands
 below assume a non-root user with `sudo` access.
+
+### Quick Start
+
+For a fresh server where the domain's DNS is already pointed at this
+machine's IP address, the entire setup can be run as one block. Replace
+`yourdomain.com` and the two passwords before running.
+
+```bash
+# ── Run as your sudo-capable user ──────────────────────────────────────────
+sudo apt update && sudo apt upgrade -y
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs mariadb-server nginx certbot python3-certbot-nginx
+sudo systemctl enable --now mariadb nginx
+sudo npm install -g pm2
+
+sudo adduser --disabled-password --gecos "" cima
+sudo -u cima -i <<'EOF'
+git clone https://github.com/joelklammer/CIMA.git ~/cima
+cd ~/cima
+npm install
+cp .env.example .env
+sed -i \
+  -e 's/DB_USER=.*/DB_USER=cima_app/' \
+  -e 's/DB_PASSWORD=.*/DB_PASSWORD=CHANGE_ME_DB_PASSWORD/' \
+  -e 's/SESSION_SECRET=.*/SESSION_SECRET='"$(openssl rand -hex 64)"'/' \
+  -e 's/NODE_ENV=.*/NODE_ENV=production/' \
+  .env
+EOF
+
+# Create the DB user — edit the password in this file to match .env first
+sudo mariadb < /home/cima/cima/db/create-mariadb-user.sql
+
+sudo -u cima -i <<'EOF'
+cd ~/cima
+npm run setup
+EOF
+
+# Nginx: point root at the app and set the real domain
+sudo cp /home/cima/cima/nginx/cima.conf /etc/nginx/sites-available/cima
+sudo sed -i \
+  -e 's/yourdomain\.com/YOUR_ACTUAL_DOMAIN/g' \
+  -e 's#root .*/public;#root /home/cima/cima/public;#' \
+  /etc/nginx/sites-available/cima
+sudo ln -s /etc/nginx/sites-available/cima /etc/nginx/sites-enabled/cima
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t && sudo systemctl reload nginx
+
+sudo certbot --nginx -d YOUR_ACTUAL_DOMAIN
+
+sudo -u cima -i <<'EOF'
+cd ~/cima
+pm2 start ecosystem.config.js --env production
+pm2 save
+EOF
+
+pm2 startup systemd -u cima --hp /home/cima
+# ↑ copy and run the "sudo env PATH=... pm2 startup ..." line it prints
+```
+
+Then log in to `https://YOUR_ACTUAL_DOMAIN/admin.html` with `admin` /
+`admin123` and change the password immediately.
+
+If anything above fails or you want to understand what each step does,
+follow the full step-by-step walkthrough below.
 
 ### 1. Install system dependencies
 
@@ -526,6 +592,21 @@ When upgrading from a version that predates the `archived` column:
 
 ```bash
 sudo mariadb cima < /home/cima/cima/db/migrate-add-archived.sql
+pm2 restart cima
+```
+
+When upgrading from a version that predates the `event_date` column:
+
+```bash
+sudo mariadb cima < /home/cima/cima/db/migrate-add-date.sql
+pm2 restart cima
+```
+
+When upgrading from a version that used a single `num_datasets` column
+instead of a start/end dataset range:
+
+```bash
+sudo mariadb cima < /home/cima/cima/db/migrate-add-dataset-range.sql
 pm2 restart cima
 ```
 
