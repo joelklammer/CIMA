@@ -602,14 +602,6 @@ sudo mariadb cima < /home/cima/cima/db/migrate-add-date.sql
 pm2 restart cima
 ```
 
-When upgrading from a version that used a single `num_datasets` column
-instead of a start/end dataset range:
-
-```bash
-sudo mariadb cima < /home/cima/cima/db/migrate-add-dataset-range.sql
-pm2 restart cima
-```
-
 ### Deploying updates
 
 ```bash
